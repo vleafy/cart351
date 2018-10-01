@@ -1,0 +1,319 @@
+<html>
+<head>
+  <title> excercise 2 </title>
+  <style>
+  body{
+    margin:0;
+    padding:0;
+  }
+  canvas{
+    background:#33ff5c;
+    margin:0;
+    padding:0;
+  }
+  </style>
+  <script>
+  /*** THIS EX SHOWS THE BASIC SETUP ****/
+  //only run this once the window loads
+
+  /** IF I CLICK ON ELLIPSE IT MOVES - IF I CLICK ON ELLIPSE AGAIN IT STOPS*/
+  window.onload = function(){
+// step 1 access the canvas element && the graphics context....
+let canvas = document.getElementById('testCanvas');
+let canvasContext = canvas.getContext('2d');
+
+let im = new Image();
+im.src = 'images/minivan.png';
+let im2 = new Image();
+im2.src = 'images/minivan.png';
+
+//NEW LETS PUT IN A STATE VARIABLE
+let state =0;
+
+// max number ellipses
+const MAX_ELLIPSES =1;
+//array to hold objects
+let myEllipses = [];
+let boxes =[];
+//make some possible colors
+let colors = ["#00ff33","#00ff33","#00ff33","#00ff33","#00ff33","#00ff33","#00ff33"];
+
+//fill the array with objects
+//for (let i =0; i< MAX_ELLIPSES;i++){
+let objW = 80;
+let offsetX =10;
+let i =0;
+myEllipses.push(new myRunningEllipse(canvas.width/2,canvas.height/2,objW/2,colors[0],(i%5)+1,(i%6)+2,i,im));
+i=1;
+myEllipses.push(new myRunningEllipse((i*(objW+offsetX))+canvas.width/1.7,canvas.height/1.7,objW/2,colors[0],(i%5)+1,(i%6)+2,i,im2));
+//}
+
+//fill some rects for later
+for(let i=0; i<5;i++){
+  boxes.push(new RunningBox(i*60+100,canvas.height/2,50,50,colors[i%colors.length],i,im));
+}
+
+
+
+// add an event listener
+//add event listener to the WHOLE canvas (new)
+canvas.addEventListener('mousemove', (event) => {
+  for (let i =0; i< myEllipses.length;i++){
+      // test if is over an ellipse and will initate a state change ...
+      myEllipses[i].hitTestOver(event);
+    }
+
+
+});
+// for clicking on rects later ...
+canvas.addEventListener('mousedown', (event) => {
+  if(state ===2){
+    for (let i =0; i< boxes.length;i++){
+      // test if is over an ellipse and will initate a state change ...
+      boxes[i].hitTestDown(event);
+    }
+  }
+});
+
+//start animation
+  requestAnimationFrame(runAni);
+
+// add in animation
+function runAni(){
+  //need to reset the background :)
+  // clear the canvas ...
+  console.log(state);
+  canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+
+// use the state variable here for knowing which clause to run ...
+//STATE 0 clause
+if(state ==0){
+  // waiting for rollover on ellipse
+  for (let i =0; i< myEllipses.length;i++){
+   myEllipses[i].render();
+    myEllipses[i].disappearFixed();
+
+
+  }
+}
+
+//STATE 1 clause
+else if(state ==1){
+  //ellipse disappears and boxes appear
+  for (let i =0; i< myEllipses.length;i++){
+     myEllipses[i].render();
+     myEllipses[i].disappearFixed();
+
+    }
+  for(let i =0; i<boxes.length; i++){
+   boxes[i].renderBox();
+    boxes[i].appear();
+ }
+
+}
+
+else if(state ==2){
+  //done trans - waiting to click box
+  for (let i =0; i< myEllipses.length;i++){
+     myEllipses[i].render();
+
+    }
+  for(let i =0; i<boxes.length; i++){
+   boxes[i].renderBox();
+ }
+
+}
+
+else if(state ==3){
+  //make boxes disappear & ellipse appear
+  for (let i =0; i< myEllipses.length;i++){
+     myEllipses[i].render();
+     myEllipses[i].revealFixed();
+   }
+
+  for(let i =0; i<boxes.length; i++){
+   boxes[i].renderBox();
+   boxes[i].disappear();
+ }
+
+}
+
+  // recursive call ...
+  requestAnimationFrame(runAni);
+}
+
+/*** RUNNING BOX OBJ *****/
+function RunningBox(x,y,w,h,c,initId,imageRef){
+    this.xPos = canvas.width/2;
+    this.yPos = y;
+    this.boxWidth = w;
+    this.boxHeight = h;
+    this.imWidth = im.width;
+    this.imHeight = im.height;
+    this.boxColor = c;
+    this.boxId = initId;
+    this.homeX = x;
+    this.currentSize = 0;
+
+    this.imageEL = imageRef;
+
+    this.scalarHome= Math.abs(this.homeX - canvas.width/2)/500;
+    this.scalar = this.boxWidth/500;
+
+    this.isPressed =false;
+
+
+    this.renderBox = function(){
+     // NEED TO USE OUR "graphics context" for drawing::
+     //** ALWAYS HAVE BEGIN PATH AND CLOSE PATH
+     canvasContext.save();
+     canvasContext.beginPath();
+     canvasContext.fillStyle = c; // change the color we are using
+     //canvasContext.fillRect(this.xPos,this.yPos,this.currentSize,this.currentSize);
+    canvasContext.drawImage(this.imageEL,this.xPos ,this.yPos,this.currentSize,this.currentSize);
+     canvasContext.fill(); // set the fill
+     canvasContext.closePath();
+     canvasContext.restore();
+
+   }
+
+// when they appear
+   this.appear =function(){
+     let cDist = Math.abs(this.homeX - this.xPos);
+     if(cDist>.5){
+     if(this.homeX<this.xPos){
+     this.xPos-=this.scalarHome;
+      this.currentSize+=this.scalar;
+      }
+      else if(this.homeX>this.xPos){
+        this.xPos+=this.scalarHome;
+        this.currentSize+=this.scalar;
+      }
+    }
+    else {state =2;}
+
+  }
+
+//for when they disappear
+  this.disappear =function(){
+
+    let cDist = Math.abs(canvas.width/2- this.xPos);
+    if(cDist>.5){
+    if(canvas.width/2<this.xPos){
+     this.xPos-=this.scalarHome;
+     this.currentSize-=this.scalar;
+     }
+     else if(canvas.width/2>this.xPos){
+       this.xPos+=this.scalarHome;
+       this.currentSize-=this.scalar;
+     }
+   }
+ }
+// test if mouse id on a box
+  this.hitTestDown = function(event){
+      if(event.clientX>this.xPos && event.clientX<this.xPos+this.boxWidth &&
+      event.clientY>this.yPos && event.clientY<this.yPos+this.boxHeight){
+        this.isPressed =true;
+        console.log(`${this.boxId} was clicked`);
+        document.write("Hello World");
+        //change state ...
+        state=3;
+      }
+      else{
+        this.isPressed =false;
+      }
+    }
+ } //end
+/*** RUNNING ELLIPSE OBJ *****/
+function myRunningEllipse(x,y,r,c,xSpeed,ySpeed,tempId,imageRef){
+  //member variables
+  this.xPos = x;
+  this.yPos = y;
+  this.imWidth = im.width;
+  this.imHeight = im.height;
+  this.ellipseColor = c;
+
+  // new for updating
+  this.xSpeed = xSpeed;
+  this.ySpeed =ySpeed;
+  this.ellipseID = tempId;
+  this.imageEL = imageRef;
+  //this.origImWidth =this.imWidth;
+  //  this.origImWidth =this.imHeight;
+
+  // new :: have a boolean to test if this is active (down)
+  this.isPressed =false;
+// new :: have a boolean to test if this is active (over)
+  this.isOver =false;
+
+// new have a var for opacity
+  this.currentOpacity =1.0;
+
+//member function
+  this.render =function(){
+    // canvasContext.save();
+    //  canvasContext.beginPath();
+    //  canvasContext.globalAlpha = this.currentOpacity;
+
+    //console.log(this.xPos-this.radius/4);
+
+    canvasContext.drawImage(this.imageEL,this.xPos - this.imageEL.width/2 ,this.yPos- this.imageEL.height/2,this.imWidth,this.imHeight);
+    //  canvasContext.arc(this.xPos-this.imWidth,this.yPos-this.imHeight,this.imWidth,0, Math.PI * 2, true);
+  //  canvasContext.fillStyle = this.ellipseColor;// change the color we are using
+    // canvasContext.fill(); // set the fill
+    //  canvasContext.closePath(); //close a path ...
+    //  canvasContext.restore();
+
+    }
+
+     //hit test over
+     this.hitTestOver =function(event){
+       //use distance formula
+       console.log("over");
+       if(Math.sqrt(Math.pow((event.clientX-(this.xPos -this.imWidth) ),2) + Math.pow((event.clientY - (this.yPos-this.imHeight)),2))< this.imWidth){
+         this.isOver =true;
+          console.log("animate");
+
+        }
+       // not hitting? make it false
+       else{
+         // if not over make it state 0....
+         this.isOver =false;
+          state =0;
+       }
+     }
+
+     //member function disappearing
+     this.disappearFixed= function(){
+       if(this.isOver ===true){
+         console.log("animate");
+         //this.radius+=1;
+         this.imWidth+=1;
+         this.imHeight+=1;
+         if(this.currentOpacity>0.001){
+           this.currentOpacity-=0.001;
+         }
+         state =1;
+      }
+    }
+
+    //member function for appearing
+    this.revealFixed= function(){
+        this.ellipseColor = colors[4];
+        if(this.imWidth > 40)
+        this.imWidth-=1;
+        this.imHeight-=1;
+        if(this.currentOpacity<.99){
+          this.currentOpacity+=0.001;
+        }
+     }
+  } //end myRunningEllipse
+}//end window onload
+  </script>
+</head>
+<body>
+<canvas id="testCanvas" width="500" height="500">
+
+</canvas>
+</body>
+</html>
