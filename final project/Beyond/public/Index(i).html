@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+
+    <!-- <style>
+    h1 {color:blue;}
+    body {color:blue; font-size: 20px; font: "Courier New", Courier, monospace
+ padding: 0; margin: 0;background:black;}
+    #container{position:absolute;}
+    h1{color:white;}
+    </style>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" type="text/css" href="style/beyond.css">
+    <script src = "jquery/jquery-3.3.1.min.js"></script>
+    <script src="js/three.js"></script>
+
+    <script src="p5/p5.js"></script>
+    <script src="p5/addons/p5.sound.js"></script>
+    <script src="p5/addons/p5.dom.js"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeyondSound</title>
+
+  </head> -->
+  <body>
+<center>
+  <!-- Beyond Project
+  <input type="button" id="Play" value="Play" />
+  <input type="button" id="More" value="Beyond" />
+  <input type="button" id="Stop" value="Arrete" /> -->
+
+
+  <script>
+    let client  ="";
+    let start =false;
+
+    window.onload = function(){
+
+    console.log("we have launched client script");
+    client = io.connect('http://localhost:4200');
+
+    /* THESE CALLBACKS ARE MESSAGES RECEIVED FROM THE SERVER */
+    // when receives a connect message
+    client.on('connect', function(data) {
+      console.log("I am online");
+      client.emit('join', 'Hello World from client');
+      start =true;
+
+  });
+
+  }
+
+  </script>
+  <script src= "js/sound2.js"> </script>
+
+
+  <div id = "container"></div>
+
+
+  <header></header>
+
+  <section></section>
+
+
+
+</center>
+</body>
+</html>
